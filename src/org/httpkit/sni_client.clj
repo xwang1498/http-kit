@@ -45,16 +45,18 @@
    May be used as an argument to `org.httpkit.client/make-client`:
     (make-client :ssl-configurer (ssl-configurer))"
   ([ssl-engine uri] (ssl-configurer {} ssl-engine uri))
-  ([{:keys [hostname-verification? sni?] :as opts
+  ([{:keys [hostname-verification? sni? maximum-packet-size] :as opts
      :or   {;; TODO Better option/s than hacky version check?
             hostname-verification? (>= @java-version_ 11)
-            sni?                   true}}
+            sni?                   true
+            maximum-packet-size    nil}}
     ^SSLEngine ssl-engine ^URI uri]
 
    (let [^SSLParameters ssl-params (.getSSLParameters ssl-engine)]
      (when hostname-verification? (.setEndpointIdentificationAlgorithm ssl-params "HTTPS"))
      (when sni?                   (.setServerNames                     ssl-params
                                     [(SNIHostName. (.getHost uri))]))
+     (when maximum-packet-size (.setMaximumPacketSize ssl-params maximum-packet-size))
 
      ;; TODO Better option/s than hacky version check?
      (when (and (>= @java-version_ 11) (not (.getUseClientMode ssl-engine)))
